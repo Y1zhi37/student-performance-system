@@ -16,7 +16,6 @@ def is_teacher(user):
 def is_student(user):
     return user.groups.filter(name='Student').exists()
 
-@login_required
 def home(request):
     return render(request, 'performance/home.html')
 

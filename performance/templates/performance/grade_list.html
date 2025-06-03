@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block content %}
+    <h1>{% trans "Оценки" %}</h1>
+    {% if user.groups.all.0.name == 'Teacher' %}
+        <a href="{% url 'performance:grade_add' %}" class="btn btn-primary mb-3">{% trans "Добавить оценку" %}</a>
+    {% endif %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>{% trans "Студент" %}</th>
+                <th>{% trans "Группа" %}</th>
+                <th>{% trans "Предмет" %}</th>
+                <th>{% trans "Оценка" %}</th>
+                <th>{% trans "Дата" %}</th>
+                {% if user.groups.all.0.name == 'Teacher' or user.groups.all.0.name == 'Admin' %}
+                    <th>{% trans "Действия" %}</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for grade in grades %}
+                <tr>
+                    <td>{{ grade.student }}</td>
+                    <td>{{ grade.student.group.name|default:"Без группы" }}</td>
+                    <td>{{ grade.subject }}</td>
+                    <td>{{ grade.score }}</td>
+                    <td>{{ grade.date }}</td>
+                    {% if user.groups.all.0.name == 'Teacher' or user.groups.all.0.name == 'Admin' %}
+                        <td>
+                            {% if user.groups.all.0.name == 'Teacher' %}
+                                <a href="{% url 'performance:grade_edit' grade.pk %}" class="btn btn-sm btn-warning">{% trans "Редактировать" %}</a>
+                            {% endif %}
+                            {% if user.groups.all.0.name == 'Admin' %}
+                                <a href="{% url 'performance:grade_delete' grade.pk %}" class="btn btn-sm btn-danger">{% trans "Удалить" %}</a>
+                            {% endif %}
+                        </td>
+                    {% endif %}
+                </tr>
+            {% empty %}
+                <tr><td colspan="6">{% trans "Оценки не найдены." %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
