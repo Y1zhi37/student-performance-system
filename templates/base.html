@@ -18,7 +18,7 @@
                         <a class="nav-link" href="{% url 'performance:subject_list' %}">{% trans "Предметы" %}</a>
                     {% endif %}
                     <a class="nav-link" href="{% url 'performance:grade_list' %}">{% trans "Оценки" %}</a>
-                    <a class="nav-link" href="{% url 'performance:report' %}">{% trans "Отчет" %}</a>
+                    <a class="nav-link" href="{% url 'performance:report' %}">{% trans "Отчёт" %}</a>
                     <a class="nav-link" href="{% url 'admin:index' %}">{% trans "Панель администратора" %}</a>
                     <form action="{% url 'logout' %}" method="post" class="d-inline">
                         {% csrf_token %}

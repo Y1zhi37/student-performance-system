@@ -8,8 +8,9 @@ class GroupAdmin(admin.ModelAdmin):
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('first_name', 'last_name', 'email', 'group')
+    list_display = ('first_name', 'last_name', 'email', 'group', 'user')
     search_fields = ('first_name', 'last_name', 'email')
+    list_filter = ('group',)
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):

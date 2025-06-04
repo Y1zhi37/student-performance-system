@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Avg
 from .models import Student, Subject, Grade
 from .forms import StudentForm, SubjectForm, GradeForm
+from django.db.models import Avg
 
 # Проверка роли администратора
 def is_admin(user):
@@ -19,11 +19,8 @@ def is_student(user):
 def home(request):
     return render(request, 'performance/home.html')
 
-# Список студентов
 @login_required
 def student_list(request):
-    if is_student(request.user):
-        return redirect('performance:grade_list')  # Студенты видят только свои оценки
     students = Student.objects.all()
     return render(request, 'performance/student_list.html', {'students': students})
 
@@ -158,17 +155,31 @@ def grade_delete(request, pk):
 # Отчеты
 @login_required
 def report(request):
-    # Средние баллы по студентам
-    student_averages = Student.objects.annotate(avg_score=Avg('grade__score'))
-    # Средние баллы по предметам
+    if is_student(request.user):
+        try:
+            student = Student.objects.get(email=request.user.email)
+            grades = Grade.objects.filter(student=student)
+            avg_score = grades.aggregate(Avg('score'))['score__avg']
+            context = {
+                'student': student,
+                'grades': grades,
+                'avg_score': avg_score or 0,
+            }
+            return render(request, 'performance/grade_list.html', context)
+        except Student.DoesNotExist:
+            return render(request, 'performance/grade_list.html', {'error': 'Нет связанного объекта Student'})
+    
+    # Для Admin и Teacher полный отчёт
+    student_averages = Student.objects.annotate(avg_score=Avg('grade__score')).order_by('-avg_score')
     subject_averages = Subject.objects.annotate(avg_score=Avg('grade__score'))
-    # Лучший и худший студент
-    best_student = student_averages.order_by('-avg_score').first()
-    worst_student = student_averages.order_by('avg_score').first()
-
-    return render(request, 'performance/report.html', {
+    
+    best_student = student_averages.first()
+    worst_student = student_averages.last()
+    
+    context = {
         'student_averages': student_averages,
         'subject_averages': subject_averages,
         'best_student': best_student,
         'worst_student': worst_student,
-    })
+    }
+    return render(request, 'performance/report.html', context)

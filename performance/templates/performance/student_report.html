@@ -12,16 +12,21 @@
                 var firstSheetName = workbook.SheetNames[0];
                 var worksheet = workbook.Sheets[firstSheetName];
 
+                // Convert sheet to JSON to filter blank rows
                 var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
                 var filteredData = jsonData.filter(row => row.some(filledCell));
 
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
                 var headerRowIndex = filteredData.findIndex((row, index) =>
                   row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
                 );
+                // Fallback
                 if (headerRowIndex === -1 || headerRowIndex > 25) {
                   headerRowIndex = 0;
                 }
 
+                // Convert filtered JSON back to CSV
                 var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
                 csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
                 return csv;
@@ -35,47 +40,29 @@
         </script>{% extends 'base.html' %}
 {% load i18n %}
 {% block content %}
-    <h1>{% trans "Оценки" %}</h1>
+    <h1>{% trans "Ваш отчёт об успеваемости" %}</h1>
     {% if error %}
         <p class="text-danger">{% trans "Ошибка: Нет связанного объекта Student. Обратитесь к администратору." %}</p>
     {% else %}
-        {% if user.groups.all.0.name == 'Teacher' %}
-            <a href="{% url 'performance:grade_add' %}" class="btn btn-primary mb-3">{% trans "Добавить оценку" %}</a>
-        {% endif %}
+        <h2>{% trans "Ваши оценки" %}</h2>
+        <p>{% blocktrans %}Средний балл: {{ avg_score|floatformat:2 }}{% endblocktrans %}</p>
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>{% trans "Студент" %}</th>
-                    <th>{% trans "Группа" %}</th>
                     <th>{% trans "Предмет" %}</th>
                     <th>{% trans "Оценка" %}</th>
                     <th>{% trans "Дата" %}</th>
-                    {% if user.groups.all.0.name == 'Teacher' or user.groups.all.0.name == 'Admin' %}
-                        <th>{% trans "Действия" %}</th>
-                    {% endif %}
                 </tr>
             </thead>
             <tbody>
                 {% for grade in grades %}
                     <tr>
-                        <td>{{ grade.student }}</td>
-                        <td>{{ grade.student.group.name|default:"Без группы" }}</td>
                         <td>{{ grade.subject }}</td>
                         <td>{{ grade.score }}</td>
                         <td>{{ grade.date }}</td>
-                        {% if user.groups.all.0.name == 'Teacher' or user.groups.all.0.name == 'Admin' %}
-                            <td>
-                                {% if user.groups.all.0.name == 'Teacher' %}
-                                    <a href="{% url 'performance:grade_edit' grade.pk %}" class="btn btn-sm btn-warning">{% trans "Редактировать" %}</a>
-                                {% endif %}
-                                {% if user.groups.all.0.name == 'Admin' %}
-                                    <a href="{% url 'performance:grade_delete' grade.pk %}" class="btn btn-sm btn-danger">{% trans "Удалить" %}</a>
-                                {% endif %}
-                            </td>
-                        {% endif %}
                     </tr>
                 {% empty %}
-                    <tr><td colspan="6">{% trans "Оценки не найдены." %}</td></tr>
+                    <tr><td colspan="3">{% trans "Оценки не найдены." %}</td></tr>
                 {% endfor %}
             </tbody>
         </table>

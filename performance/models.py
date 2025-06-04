@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Group(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name='Название группы')
@@ -12,6 +13,7 @@ class Group(models.Model):
         verbose_name_plural = 'Группы'
 
 class Student(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Пользователь')
     first_name = models.CharField(max_length=50, verbose_name='Имя')
     last_name = models.CharField(max_length=50, verbose_name='Фамилия')
     email = models.EmailField(unique=True, verbose_name='Электронная почта')
