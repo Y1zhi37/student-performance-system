@@ -1,30 +1,27 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import Group
+from django.db.models import Avg
 from .models import Student, Subject, Grade
 from .forms import StudentForm, SubjectForm, GradeForm
-from django.db.models import Avg
 
-# Проверка роли администратора
 def is_admin(user):
     return user.groups.filter(name='Admin').exists()
 
-# Проверка роли преподавателя
-def is_teacher(user):
-    return user.groups.filter(name='Teacher').exists()
+def is_teacher_or_admin(user):
+    return user.groups.filter(name__in=['Admin', 'Teacher']).exists()
 
-# Проверка роли студента
-def is_student(user):
-    return user.groups.filter(name='Student').exists()
-
+@login_required
 def home(request):
     return render(request, 'performance/home.html')
 
 @login_required
 def student_list(request):
+    if not request.user.groups.filter(name__in=['Admin', 'Teacher']).exists():
+        return redirect('performance:grade_list')
     students = Student.objects.all()
     return render(request, 'performance/student_list.html', {'students': students})
 
-# Добавление студента (только админ)
 @login_required
 @user_passes_test(is_admin)
 def student_add(request):
@@ -37,7 +34,6 @@ def student_add(request):
         form = StudentForm()
     return render(request, 'performance/student_form.html', {'form': form})
 
-# Редактирование студента (только админ)
 @login_required
 @user_passes_test(is_admin)
 def student_edit(request, pk):
@@ -51,7 +47,6 @@ def student_edit(request, pk):
         form = StudentForm(instance=student)
     return render(request, 'performance/student_form.html', {'form': form})
 
-# Удаление студента (только админ)
 @login_required
 @user_passes_test(is_admin)
 def student_delete(request, pk):
@@ -61,15 +56,11 @@ def student_delete(request, pk):
         return redirect('performance:student_list')
     return render(request, 'performance/student_delete.html', {'student': student})
 
-# Список предметов
 @login_required
 def subject_list(request):
-    if is_student(request.user):
-        return redirect('performance:grade_list')
     subjects = Subject.objects.all()
     return render(request, 'performance/subject_list.html', {'subjects': subjects})
 
-# Добавление предмета (только админ)
 @login_required
 @user_passes_test(is_admin)
 def subject_add(request):
@@ -82,7 +73,6 @@ def subject_add(request):
         form = SubjectForm()
     return render(request, 'performance/subject_form.html', {'form': form})
 
-# Редактирование предмета (только админ)
 @login_required
 @user_passes_test(is_admin)
 def subject_edit(request, pk):
@@ -96,7 +86,6 @@ def subject_edit(request, pk):
         form = SubjectForm(instance=subject)
     return render(request, 'performance/subject_form.html', {'form': form})
 
-# Удаление предмета (только админ)
 @login_required
 @user_passes_test(is_admin)
 def subject_delete(request, pk):
@@ -106,18 +95,21 @@ def subject_delete(request, pk):
         return redirect('performance:subject_list')
     return render(request, 'performance/subject_delete.html', {'subject': subject})
 
-# Список оценок
 @login_required
 def grade_list(request):
-    if is_student(request.user):
-        grades = Grade.objects.filter(student__email=request.user.email)
-    else:
+    if request.user.groups.filter(name__in=['Admin', 'Teacher']).exists():
         grades = Grade.objects.all()
-    return render(request, 'performance/grade_list.html', {'grades': grades})
+        return render(request, 'performance/grade_list.html', {'grades': grades})
+    try:
+        student = Student.objects.get(email=request.user.email)
+        grades = Grade.objects.filter(student=student)
+        return render(request, 'performance/grade_list.html', {'grades': grades})
+    except Student.DoesNotExist:
+        grades = Grade.objects.none()
+        return render(request, 'performance/grade_list.html', {'grades': grades, 'error': True})
 
-# Добавление оценки (только преподаватель)
 @login_required
-@user_passes_test(is_teacher)
+@user_passes_test(is_teacher_or_admin)
 def grade_add(request):
     if request.method == 'POST':
         form = GradeForm(request.POST)
@@ -128,9 +120,8 @@ def grade_add(request):
         form = GradeForm()
     return render(request, 'performance/grade_form.html', {'form': form})
 
-# Редактирование оценки (только преподаватель)
 @login_required
-@user_passes_test(is_teacher)
+@user_passes_test(is_teacher_or_admin)
 def grade_edit(request, pk):
     grade = get_object_or_404(Grade, pk=pk)
     if request.method == 'POST':
@@ -142,9 +133,8 @@ def grade_edit(request, pk):
         form = GradeForm(instance=grade)
     return render(request, 'performance/grade_form.html', {'form': form})
 
-# Удаление оценки (только админ)
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(is_teacher_or_admin)
 def grade_delete(request, pk):
     grade = get_object_or_404(Grade, pk=pk)
     if request.method == 'POST':
@@ -152,34 +142,35 @@ def grade_delete(request, pk):
         return redirect('performance:grade_list')
     return render(request, 'performance/grade_delete.html', {'grade': grade})
 
-# Отчеты
 @login_required
 def report(request):
-    if is_student(request.user):
-        try:
-            student = Student.objects.get(email=request.user.email)
-            grades = Grade.objects.filter(student=student)
-            avg_score = grades.aggregate(Avg('score'))['score__avg']
-            context = {
-                'student': student,
-                'grades': grades,
-                'avg_score': avg_score or 0,
-            }
-            return render(request, 'performance/grade_list.html', context)
-        except Student.DoesNotExist:
-            return render(request, 'performance/grade_list.html', {'error': 'Нет связанного объекта Student'})
-    
-    # Для Admin и Teacher полный отчёт
-    student_averages = Student.objects.annotate(avg_score=Avg('grade__score')).order_by('-avg_score')
-    subject_averages = Subject.objects.annotate(avg_score=Avg('grade__score'))
-    
-    best_student = student_averages.first()
-    worst_student = student_averages.last()
-    
-    context = {
-        'student_averages': student_averages,
-        'subject_averages': subject_averages,
-        'best_student': best_student,
-        'worst_student': worst_student,
-    }
-    return render(request, 'performance/report.html', context)
+    if request.user.groups.filter(name__in=['Admin', 'Teacher']).exists():
+        # Вычисление средних баллов по студентам
+        student_averages = Student.objects.annotate(
+            avg_score=Avg('grade__score')
+        ).filter(avg_score__isnull=False).order_by('-avg_score')
+
+        # Лучший и худший студент
+        best_student = student_averages.first()
+        worst_student = student_averages.last()
+
+        # Средние баллы по предметам
+        subject_averages = Subject.objects.annotate(
+            avg_score=Avg('grade__score')
+        ).filter(avg_score__isnull=False)
+
+        return render(request, 'performance/report.html', {
+            'best_student': best_student,
+            'worst_student': worst_student,
+            'student_averages': student_averages,
+            'subject_averages': subject_averages
+        })
+
+    try:
+        student = Student.objects.get(email=request.user.email)
+        grades = Grade.objects.filter(student=student)
+        avg_score = grades.aggregate(Avg('score'))['score__avg'] or 0
+        return render(request, 'performance/student_report.html', {'grades': grades, 'avg_score': avg_score})
+    except Student.DoesNotExist:
+        grades = Grade.objects.none()
+        return render(request, 'performance/student_report.html', {'grades': grades, 'avg_score': 0, 'error': True})

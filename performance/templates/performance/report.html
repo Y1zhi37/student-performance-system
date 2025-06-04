@@ -1,30 +1,29 @@
 {% extends 'base.html' %}
-{% load i18n %}
 {% block content %}
-    <h1>{% trans "Отчёт об успеваемости" %}</h1>
-    <h2>{% trans "Лучший студент" %}</h2>
+    <h1>Отчёт об успеваемости</h1>
+    <h2>Лучший студент</h2>
     <p>
         {% if best_student %}
             {{ best_student.first_name }} {{ best_student.last_name }} {% if best_student.group %}({{ best_student.group.name }}){% else %}(Без группы){% endif %}: {{ best_student.avg_score|floatformat:2 }}
         {% else %}
-            {% trans "Данные отсутствуют." %}
+            Данные отсутствуют.
         {% endif %}
     </p>
-    <h2>{% trans "Худший студент" %}</h2>
+    <h2>Худший студент</h2>
     <p>
         {% if worst_student %}
             {{ worst_student.first_name }} {{ worst_student.last_name }} {% if worst_student.group %}({{ worst_student.group.name }}){% else %}(Без группы){% endif %}: {{ worst_student.avg_score|floatformat:2 }}
         {% else %}
-            {% trans "Данные отсутствуют." %}
+            Данные отсутствуют.
         {% endif %}
     </p>
-    <h2>{% trans "Средние баллы по студентам" %}</h2>
+    <h2>Средние баллы по студентам</h2>
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>{% trans "Студент" %}</th>
-                <th>{% trans "Группа" %}</th>
-                <th>{% trans "Средний балл" %}</th>
+                <th>Студент</th>
+                <th>Группа</th>
+                <th>Средний балл</th>
             </tr>
         </thead>
         <tbody>
@@ -35,16 +34,16 @@
                     <td>{{ student.avg_score|floatformat:2 }}</td>
                 </tr>
             {% empty %}
-                <tr><td colspan="3">{% trans "Данные отсутствуют." %}</td></tr>
+                <tr><td colspan="3">Данные отсутствуют.</td></tr>
             {% endfor %}
         </tbody>
     </table>
-    <h2>{% trans "Средние баллы по предметам" %}</h2>
+    <h2>Средние баллы по предметам</h2>
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>{% trans "Предмет" %}</th>
-                <th>{% trans "Средний балл" %}</th>
+                <th>Предмет</th>
+                <th>Средний балл</th>
             </tr>
         </thead>
         <tbody>
@@ -54,7 +53,7 @@
                     <td>{{ subject.avg_score|floatformat:2 }}</td>
                 </tr>
             {% empty %}
-                <tr><td colspan="2">{% trans "Данные отсутствуют." %}</td></tr>
+                <tr><td colspan="2">Данные отсутствуют.</td></tr>
             {% endfor %}
         </tbody>
     </table>

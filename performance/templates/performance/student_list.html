@@ -1,19 +1,18 @@
 {% extends 'base.html' %}
-{% load i18n %}
 {% block content %}
-    <h1>{% trans "Студенты" %}</h1>
+    <h1>Студенты</h1>
     {% if user.groups.all.0.name == 'Admin' %}
-        <a href="{% url 'performance:student_add' %}" class="btn btn-primary mb-3">{% trans "Добавить студента" %}</a>
+        <a href="{% url 'performance:student_add' %}" class="btn btn-primary mb-3">Добавить студента</a>
     {% endif %}
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>{% trans "Имя" %}</th>
-                <th>{% trans "Фамилия" %}</th>
-                <th>{% trans "Электронная почта" %}</th>
-                <th>{% trans "Группа" %}</th>
+                <th>Имя</th>
+                <th>Фамилия</th>
+                <th>Электронная почта</th>
+                <th>Группа</th>
                 {% if user.groups.all.0.name == 'Admin' %}
-                    <th>{% trans "Действия" %}</th>
+                    <th>Действия</th>
                 {% endif %}
             </tr>
         </thead>
@@ -26,13 +25,13 @@
                     <td>{{ student.group.name|default:"Без группы" }}</td>
                     {% if user.groups.all.0.name == 'Admin' %}
                         <td>
-                            <a href="{% url 'performance:student_edit' student.pk %}" class="btn btn-sm btn-warning">{% trans "Редактировать" %}</a>
-                            <a href="{% url 'performance:student_delete' student.pk %}" class="btn btn-sm btn-danger">{% trans "Удалить" %}</a>
+                            <a href="{% url 'performance:student_edit' student.pk %}" class="btn btn-sm btn-warning">Редактировать</a>
+                            <a href="{% url 'performance:student_delete' student.pk %}" class="btn btn-sm btn-danger">Удалить</a>
                         </td>
                     {% endif %}
                 </tr>
             {% empty %}
-                <tr><td colspan="5">{% trans "Студенты не найдены." %}</td></tr>
+                <tr><td colspan="{% if user.groups.all.0.name == 'Admin' %}5{% else %}4{% endif %}">Студенты не найдены.</td></tr>
             {% endfor %}
         </tbody>
     </table>

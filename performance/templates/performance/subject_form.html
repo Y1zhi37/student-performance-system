@@ -1,12 +1,10 @@
 {% extends 'base.html' %}
-{% load i18n %}
-
 {% block content %}
-    <h1>{% trans "Добавить предмет" %}</h1>
+    <h1>Добавить предмет</h1>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">{% trans "Сохранить" %}</button>
-        <a href="{% url 'performance:subject_list' %}" class="btn btn-secondary">{% trans "Отмена" %}</a>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        <a href="{% url 'performance:subject_list' %}" class="btn btn-secondary">Отмена</a>
     </form>
 {% endblock %}
