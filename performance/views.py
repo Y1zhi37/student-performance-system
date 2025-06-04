@@ -145,16 +145,14 @@ def grade_delete(request, pk):
 @login_required
 def report(request):
     if request.user.groups.filter(name__in=['Admin', 'Teacher']).exists():
-        # Вычисление средних баллов по студентам
+    
         student_averages = Student.objects.annotate(
             avg_score=Avg('grade__score')
         ).filter(avg_score__isnull=False).order_by('-avg_score')
 
-        # Лучший и худший студент
         best_student = student_averages.first()
         worst_student = student_averages.last()
 
-        # Средние баллы по предметам
         subject_averages = Subject.objects.annotate(
             avg_score=Avg('grade__score')
         ).filter(avg_score__isnull=False)
