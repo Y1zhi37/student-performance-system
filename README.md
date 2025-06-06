@@ -9,7 +9,7 @@ cd student-performance-system
 
 Set up virtual environment:
 python -m venv venv
-source venv/Scripts/activate  # On Windows
+or source venv/Scripts/activate  # On Windows
 
 
 Install dependencies:
@@ -47,11 +47,4 @@ Teacher: Can add/edit grades.
 Student: Can view their own grades.
 Reports: Displays best/worst student and average scores by student and subject.
 
-Project Structure
-
-student_performance/: Django project directory.
-performance/: Django app directory.
-student_performance/templates/: Base templates (base.html).
-performance/templates/performance/: App-specific templates.
-static/: Static files (if any).
 
